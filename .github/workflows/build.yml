@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: darwin
+            goarch: amd64
+            artifact: img2png-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            artifact: img2png-darwin-arm64
+          - goos: windows
+            goarch: amd64
+            artifact: img2png-windows-amd64.exe
+          - goos: linux
+            goarch: amd64
+            artifact: img2png-linux-amd64
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Build
+        env:
+          CGO_ENABLED: '0'
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -ldflags="-s -w" -o "${{ matrix.artifact }}" .
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

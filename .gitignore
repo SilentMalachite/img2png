@@ -1,0 +1,10 @@
+# Binaries
+img2png
+img2png.exe
+img2png-darwin-amd64
+img2png-darwin-arm64
+img2png-windows-amd64.exe
+img2png-linux-amd64
+
+# Go test binaries
+*.test
