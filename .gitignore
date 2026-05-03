@@ -6,6 +6,10 @@ img2png-darwin-arm64
 img2png-windows-amd64.exe
 img2png-linux-amd64
 
+# fyne package output (built locally for testing)
+img2png.app/
+img2png.tar.xz
+
 # Go test binaries
 *.test
 
