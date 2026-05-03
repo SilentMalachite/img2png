@@ -8,3 +8,6 @@ img2png-linux-amd64
 
 # Go test binaries
 *.test
+
+# Superpowers brainstorming session artifacts (mockups, server state)
+.superpowers/
