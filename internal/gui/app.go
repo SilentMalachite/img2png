@@ -2,6 +2,7 @@ package gui
 
 import (
 	"context"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -58,7 +59,7 @@ func Run() error {
 		OutputDir:  cfg.OutputDir,
 		OutputMode: cfg.OutputMode,
 		Overwrite:  cfg.Overwrite,
-	})
+	}, w)
 	convertBtn := widget.NewButton(tr.T("button.convert"), nil)
 	right := container.NewBorder(panel.CanvasObject(), convertBtn, nil, nil)
 
@@ -93,6 +94,7 @@ func Run() error {
 			}
 		}
 
+		convertBtn.Disable()
 		ctx, cancel := context.WithCancel(context.Background())
 		cancelFn = cancel
 		progress.ShowFor(estimateTotal(items))
@@ -127,6 +129,7 @@ func Run() error {
 			canceled := ctx.Err() != nil
 			fyne.Do(func() {
 				progress.Finish(done, skipped, failed, openPath, canceled)
+				convertBtn.Enable()
 			})
 		}()
 	}
@@ -144,7 +147,9 @@ func Run() error {
 	w.SetMainMenu(BuildMainMenu(tr,
 		func(code string) {
 			cfg.Language = code
-			_ = settings.Save(cfg)
+			if err := settings.Save(cfg); err != nil {
+				log.Printf("img2png: failed to save settings: %v", err)
+			}
 			dialog.ShowInformation("Restart required", "Restart the app to apply the language change.", w)
 		},
 		func() {
@@ -163,7 +168,9 @@ func Run() error {
 		cfg.OutputDir = st.OutputDir
 		cfg.OutputMode = st.OutputMode
 		cfg.Overwrite = st.Overwrite
-		_ = settings.Save(cfg)
+		if err := settings.Save(cfg); err != nil {
+			log.Printf("img2png: failed to save settings: %v", err)
+		}
 		w.Close()
 	})
 

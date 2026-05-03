@@ -153,11 +153,7 @@ func runDir(dirPath string) error {
 }
 
 func supportedExt(ext string) bool {
-	switch strings.ToLower(ext) {
-	case ".tif", ".tiff", ".jpg", ".jpeg", ".webp", ".bmp", ".gif":
-		return true
-	}
-	return false
+	return converter.IsSupportedExt(ext, false)
 }
 
 func checkWritable(dir string) error {

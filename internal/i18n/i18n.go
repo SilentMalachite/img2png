@@ -61,6 +61,7 @@ func DetectFromLocale(loc string) string {
 var tableEN = map[string]string{
 	"button.add_files":   "+ Add Files",
 	"button.add_folder":  "+ Add Folder",
+	"button.browse":      "Browse...",
 	"button.cancel":      "Cancel",
 	"button.clear":       "Clear",
 	"button.convert":     "Convert",
@@ -87,6 +88,7 @@ var tableEN = map[string]string{
 var tableJA = map[string]string{
 	"button.add_files":   "＋ ファイル追加",
 	"button.add_folder":  "＋ フォルダ追加",
+	"button.browse":      "参照",
 	"button.cancel":      "キャンセル",
 	"button.clear":       "クリア",
 	"button.convert":     "変換開始",

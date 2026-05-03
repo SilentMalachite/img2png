@@ -13,17 +13,10 @@ import (
 	"github.com/SilentMalachite/img2png/internal/converter"
 )
 
-// supportedExt mirrors main.supportedExt — keep in sync with that and the spec.
+// supportedExt delegates to converter.IsSupportedExt with allowPNG=true so the
+// GUI accepts already-PNG inputs as a passthrough convenience.
 func supportedExt(ext string) bool {
-	switch strings.ToLower(ext) {
-	case ".tif", ".tiff", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".png":
-		// .png is included so the GUI accepts already-PNG inputs (passthrough copy).
-		// Strictly the original CLI excludes .png; here we keep it because GUI users
-		// may drop a PNG by mistake and expect it to "just work". Re-encoding a PNG
-		// via converter.ConvertFile is harmless.
-		return true
-	}
-	return false
+	return converter.IsSupportedExt(ext, true)
 }
 
 // Run converts every file referenced by Items, sending an Event per item on eventCh.

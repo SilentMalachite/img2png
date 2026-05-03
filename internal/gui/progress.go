@@ -68,7 +68,11 @@ func (p *ProgressArea) ShowFor(total int) {
 func (p *ProgressArea) Update(ev job.Event) {
 	switch ev.Kind {
 	case job.EventStart:
-		p.bar.Max = float64(ev.Total)
+		max := float64(ev.Total)
+		if max <= 0 {
+			max = 1
+		}
+		p.bar.Max = max
 	case job.EventItem:
 		p.bar.SetValue(float64(ev.Completed))
 		p.current.SetText(ev.SourcePath)

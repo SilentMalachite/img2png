@@ -207,6 +207,24 @@ func TestConvertFile_MissingFile(t *testing.T) {
 	}
 }
 
+func TestIsSupportedExt(t *testing.T) {
+	cases := []struct {
+		ext      string
+		allowPNG bool
+		want     bool
+	}{
+		{".jpg", false, true}, {".JPEG", true, true},
+		{".png", false, false}, {".png", true, true},
+		{".PNG", true, true},
+		{".txt", true, false}, {"", true, false},
+	}
+	for _, c := range cases {
+		if got := IsSupportedExt(c.ext, c.allowPNG); got != c.want {
+			t.Errorf("IsSupportedExt(%q, %v) = %v, want %v", c.ext, c.allowPNG, got, c.want)
+		}
+	}
+}
+
 // verifyPNG checks that the file at path is a valid PNG.
 func verifyPNG(t *testing.T, path string) {
 	t.Helper()

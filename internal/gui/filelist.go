@@ -3,22 +3,18 @@ package gui
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/SilentMalachite/img2png/internal/converter"
 	"github.com/SilentMalachite/img2png/internal/i18n"
 	"github.com/SilentMalachite/img2png/internal/job"
 )
 
 func supportedExt(ext string) bool {
-	switch strings.ToLower(ext) {
-	case ".tif", ".tiff", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".png":
-		return true
-	}
-	return false
+	return converter.IsSupportedExt(ext, true)
 }
 
 func AddItems(existing []job.FileItem, paths []string) []job.FileItem {
@@ -131,8 +127,3 @@ func (w *FileListWidget) Clear() {
 	}
 }
 
-// SetTranslator updates the language; call list.Refresh after to redraw labels.
-func (w *FileListWidget) SetTranslator(tr *i18n.Translator) {
-	w.tr = tr
-	w.dropHint.SetText(tr.T("label.drop"))
-}

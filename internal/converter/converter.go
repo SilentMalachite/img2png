@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 
 	// デコーダ登録（ブランクインポート）
 	_ "image/gif"
@@ -15,6 +16,19 @@ import (
 	_ "golang.org/x/image/tiff"
 	_ "golang.org/x/image/webp"
 )
+
+// IsSupportedExt reports whether ext (with leading dot, e.g. ".jpg") is a
+// supported source format. The strict variant excludes .png; the tolerant
+// variant (used by the GUI) accepts .png as a passthrough convenience.
+func IsSupportedExt(ext string, allowPNG bool) bool {
+	switch strings.ToLower(ext) {
+	case ".tif", ".tiff", ".jpg", ".jpeg", ".webp", ".bmp", ".gif":
+		return true
+	case ".png":
+		return allowPNG
+	}
+	return false
+}
 
 // ConvertFile decodes the image at srcPath and writes a PNG to outDir/outName.
 // Returns the full path of the created PNG file.
