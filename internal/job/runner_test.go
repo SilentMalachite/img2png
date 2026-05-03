@@ -76,3 +76,41 @@ func TestRun_SingleFile_Individual(t *testing.T) {
 		t.Errorf("expected output PNG: %v", err)
 	}
 }
+
+func TestRun_Directory_ZipMode(t *testing.T) {
+	root := t.TempDir()
+	srcDir := filepath.Join(root, "photos")
+	if err := os.MkdirAll(srcDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writePNG(t, filepath.Join(srcDir, "a.png"))
+	writePNG(t, filepath.Join(srcDir, "b.png"))
+
+	j := Job{
+		Items:      []FileItem{{Path: srcDir, IsDir: true}},
+		OutputDir:  "", // default → parent of dir
+		OutputMode: ModeZip,
+		Overwrite:  PolicyIncrement,
+	}
+
+	ch := make(chan Event, 16)
+	if err := Run(context.Background(), j, ch); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	close(ch)
+
+	events := drain(ch)
+	last := events[len(events)-1]
+	if last.Kind != EventDone {
+		t.Fatalf("last event Kind=%v want EventDone", last.Kind)
+	}
+	if last.OutputPath == "" {
+		t.Fatalf("expected EventDone.OutputPath to point to the zip")
+	}
+	if filepath.Base(last.OutputPath) != "photos.zip" {
+		t.Errorf("zip name = %q, want photos.zip", filepath.Base(last.OutputPath))
+	}
+	if _, err := os.Stat(last.OutputPath); err != nil {
+		t.Errorf("zip not created: %v", err)
+	}
+}
