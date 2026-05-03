@@ -17,6 +17,9 @@ const (
 type Mode int
 
 const (
+	// ModeZip — when at least one Item.IsDir, all produced PNGs are bundled
+	// into a single .zip next to the source directory. With only flat
+	// (non-directory) items, ModeZip silently behaves like ModeIndividual.
 	ModeZip Mode = iota
 	ModeIndividual
 )

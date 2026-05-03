@@ -117,53 +117,55 @@ func TestRun_Directory_ZipMode(t *testing.T) {
 
 func TestRun_Cancel_StopsBeforeRemainingItems(t *testing.T) {
 	dir := t.TempDir()
-	src1 := filepath.Join(dir, "a.png")
-	src2 := filepath.Join(dir, "b.png")
-	src3 := filepath.Join(dir, "c.png")
-	writePNG(t, src1)
-	writePNG(t, src2)
-	writePNG(t, src3)
+	srcs := []string{
+		filepath.Join(dir, "a.png"),
+		filepath.Join(dir, "b.png"),
+		filepath.Join(dir, "c.png"),
+	}
+	for _, p := range srcs {
+		writePNG(t, p)
+	}
 
 	out := filepath.Join(dir, "out")
-	_ = os.MkdirAll(out, 0o755)
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		t.Fatal(err)
+	}
 
 	j := Job{
 		Items: []FileItem{
-			{Path: src1}, {Path: src2}, {Path: src3},
+			{Path: srcs[0]}, {Path: srcs[1]}, {Path: srcs[2]},
 		},
 		OutputDir:  out,
 		OutputMode: ModeIndividual,
 		Overwrite:  PolicyIncrement,
 	}
 
+	// Cancel BEFORE Run starts. The runner should observe ctx.Err() at the top
+	// of its per-item loop and produce zero EventItem events.
 	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
 	ch := make(chan Event, 32)
-
-	// Cancel after the first item event.
-	go func() {
-		for ev := range ch {
-			if ev.Kind == EventItem {
-				cancel()
-				// Drain remaining without acting on them.
-				for range ch {
-				}
-				return
-			}
-		}
-	}()
-
 	if err := Run(ctx, j, ch); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	close(ch)
 
-	// At least one PNG should exist (the one before cancel).
-	entries, _ := os.ReadDir(out)
-	if len(entries) == 0 {
-		t.Errorf("expected at least one produced PNG before cancel")
+	events := drain(ch)
+	itemCount := 0
+	for _, ev := range events {
+		if ev.Kind == EventItem {
+			itemCount++
+		}
 	}
-	if len(entries) == 3 {
-		t.Errorf("expected cancel to skip remaining items, but got all 3")
+	if itemCount != 0 {
+		t.Errorf("expected 0 EventItem after pre-cancel, got %d", itemCount)
+	}
+
+	// No PNGs should have been produced.
+	entries, _ := os.ReadDir(out)
+	if len(entries) != 0 {
+		t.Errorf("expected no produced PNGs, got %d", len(entries))
 	}
 }
 

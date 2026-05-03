@@ -30,6 +30,8 @@ func supportedExt(ext string) bool {
 // It does not close eventCh — the caller owns that channel.
 // Cancellation: when ctx is canceled, the in-flight ConvertFile finishes and no
 // further items start. Already-produced output files are kept.
+// Run returns nil even on cancellation; callers detect partial completion via
+// EventDone.Completed < EventDone.Total.
 func Run(ctx context.Context, j Job, eventCh chan<- Event) error {
 	// Expand directories into a flat list of source files.
 	srcs, err := expandItems(j.Items)
@@ -76,7 +78,6 @@ func Run(ctx context.Context, j Job, eventCh chan<- Event) error {
 			send(ctx, eventCh, Event{Kind: EventItem, SourcePath: src, Status: StatusFailed, Err: convErr, Total: total, Completed: completed})
 			continue
 		}
-		seen[base]++
 		producedPNGs = append(producedPNGs, outPath)
 		send(ctx, eventCh, Event{Kind: EventItem, SourcePath: src, OutputPath: outPath, Status: StatusDone, Total: total, Completed: completed})
 	}
@@ -152,6 +153,8 @@ func destFor(src string, j Job, tmpDir string) (string, bool) {
 // resolveName applies the overwrite policy to produce a final filename inside outDir.
 // Returns (name, skip). When skip is true, the caller should record StatusSkipped
 // and not call ConvertFile.
+// seen[base] is incremented here at name-selection time (not at conversion-success
+// time), so name reservation is independent of whether the conversion succeeds.
 func resolveName(base, outDir string, policy OverwritePolicy, seen map[string]int, batchOnly bool) (string, bool) {
 	switch policy {
 	case PolicyIncrement:
@@ -159,30 +162,36 @@ func resolveName(base, outDir string, policy OverwritePolicy, seen map[string]in
 		// also account for files that already exist on disk.
 		name := archiver.DedupeFilename(base, seen)
 		if batchOnly {
+			seen[base]++
 			return name, false
 		}
 		// Bump until the chosen name does not collide on disk.
 		for {
 			if _, err := os.Stat(filepath.Join(outDir, name)); os.IsNotExist(err) {
+				seen[base]++
 				return name, false
 			}
 			seen[base]++
 			name = archiver.DedupeFilename(base, seen)
 		}
 	case PolicyOverwrite:
+		seen[base]++
 		return base, false
 	case PolicySkip:
 		if batchOnly {
 			if seen[base] > 0 {
 				return "", true
 			}
+			seen[base]++
 			return base, false
 		}
 		if _, err := os.Stat(filepath.Join(outDir, base)); err == nil {
 			return "", true
 		}
+		seen[base]++
 		return base, false
 	}
+	seen[base]++
 	return base, false
 }
 
