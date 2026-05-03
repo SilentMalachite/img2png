@@ -11,3 +11,6 @@ img2png-linux-amd64
 
 # Superpowers brainstorming session artifacts (mockups, server state)
 .superpowers/
+
+# Serena MCP project state (auto-created when using Serena tools)
+.serena/
