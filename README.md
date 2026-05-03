@@ -19,8 +19,8 @@ JPEG・TIFF・WebP・BMP・GIF 画像を PNG に一括変換する CLI ツール
 - **単一ファイル**を渡すと同じフォルダに PNG を出力
 - 同名ファイルは `photo.png` → `photo_2.png` と自動で連番付与
 - ZIP 内はフラット構造（サブフォルダなし）
-- **CGO 不使用**（macOS / Windows / Linux 対応の単一バイナリ）
-- ファイルを **ドラッグ&ドロップ** するだけで使える
+- **GUI モード対応**（macOS の `.app` バンドル / Windows の `.exe` をダブルクリック）
+- ファイルを **ドラッグ&ドロップ** するだけで使える（ウィンドウ・バイナリ両対応）
 
 ### ダウンロード
 
@@ -28,10 +28,10 @@ JPEG・TIFF・WebP・BMP・GIF 画像を PNG に一括変換する CLI ツール
 
 | OS | ファイル |
 |----|---------|
-| macOS (Apple Silicon) | `img2png-darwin-arm64` |
-| macOS (Intel) | `img2png-darwin-amd64` |
-| Windows | `img2png-windows-amd64.exe` |
-| Linux | `img2png-linux-amd64` |
+| macOS (Apple Silicon) | `img2png-darwin-arm64.zip` |
+| macOS (Intel) | `img2png-darwin-amd64.zip` |
+| Windows | `img2png-windows-amd64.zip` |
+| Linux | `img2png-linux-amd64.tar.xz` |
 
 **macOS の場合:** ダウンロード後、実行権限を付与してください。
 
@@ -43,7 +43,14 @@ chmod +x img2png-darwin-arm64
 
 ### 使い方
 
-#### ドラッグ&ドロップ
+#### GUI モード（推奨）
+
+`img2png.app`（macOS）または `img2png.exe`（Windows）をダブルクリックするとウィンドウが開きます。
+ファイル/フォルダをウィンドウにドラッグ&ドロップするか、「＋ファイル追加」「＋フォルダ追加」ボタンで追加し、出力先・出力モード・上書きポリシーを設定して「変換開始」を押してください。
+
+設定（言語・ウィンドウサイズ・出力先など）は次回起動時に復元されます。
+
+#### ドラッグ&ドロップ（バイナリ直接）
 
 バイナリに画像ファイルまたはフォルダをドラッグ&ドロップするだけで変換が始まります。
 
@@ -115,8 +122,8 @@ Done: photo.png
 - **Single file** input: outputs a PNG alongside the source file
 - Duplicate filenames are automatically numbered: `photo.png`, `photo_2.png`, …
 - ZIP contents are flat (no subdirectory structure)
-- **No CGO** — single binary for macOS, Windows, and Linux
-- Works with **drag-and-drop** — no terminal required
+- **GUI mode** — double-click the `.app` (macOS) or `.exe` (Windows)
+- Works with **drag-and-drop** — into the window or onto the binary
 
 ### Download
 
@@ -124,10 +131,10 @@ Download the binary for your platform from [Releases](../../releases).
 
 | OS | File |
 |----|------|
-| macOS (Apple Silicon) | `img2png-darwin-arm64` |
-| macOS (Intel) | `img2png-darwin-amd64` |
-| Windows | `img2png-windows-amd64.exe` |
-| Linux | `img2png-linux-amd64` |
+| macOS (Apple Silicon) | `img2png-darwin-arm64.zip` |
+| macOS (Intel) | `img2png-darwin-amd64.zip` |
+| Windows | `img2png-windows-amd64.zip` |
+| Linux | `img2png-linux-amd64.tar.xz` |
 
 **macOS:** After downloading, make the file executable:
 
@@ -139,9 +146,15 @@ If macOS shows "cannot verify the developer", allow it in **System Settings → 
 
 ### Usage
 
-#### Drag and Drop
+#### GUI mode (recommended)
 
-Drag an image file or folder onto the binary to start conversion.
+Double-click `img2png.app` (macOS) or `img2png.exe` (Windows) to open a window. Drag files/folders into the window or use the **+ Add Files / + Add Folder** buttons, configure the output folder, mode, and duplicate-name policy, then press **Convert**.
+
+Settings (language, window size, output folder, etc.) are restored on next launch.
+
+#### Drag and drop (onto the binary)
+
+Drag an image file or folder onto the binary to start conversion in CLI mode.
 
 #### Command Line
 
