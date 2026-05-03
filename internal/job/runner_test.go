@@ -166,3 +166,84 @@ func TestRun_Cancel_StopsBeforeRemainingItems(t *testing.T) {
 		t.Errorf("expected cancel to skip remaining items, but got all 3")
 	}
 }
+
+func TestRun_PolicyIncrement_AppendsSuffix(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "photo.png")
+	writePNG(t, src)
+
+	out := filepath.Join(dir, "out")
+	_ = os.MkdirAll(out, 0o755)
+
+	// Pre-existing photo.png at output location.
+	if err := os.WriteFile(filepath.Join(out, "photo.png"), []byte("existing"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	j := Job{
+		Items:      []FileItem{{Path: src}},
+		OutputDir:  out,
+		OutputMode: ModeIndividual,
+		Overwrite:  PolicyIncrement,
+	}
+	ch := make(chan Event, 8)
+	if err := Run(context.Background(), j, ch); err != nil {
+		t.Fatal(err)
+	}
+	close(ch)
+
+	if _, err := os.Stat(filepath.Join(out, "photo_2.png")); err != nil {
+		t.Errorf("expected photo_2.png to be created: %v", err)
+	}
+	// Pre-existing file untouched
+	b, _ := os.ReadFile(filepath.Join(out, "photo.png"))
+	if string(b) != "existing" {
+		t.Errorf("original photo.png was overwritten")
+	}
+}
+
+func TestRun_PolicyOverwrite_ReplacesExisting(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "photo.png")
+	writePNG(t, src)
+
+	out := filepath.Join(dir, "out")
+	_ = os.MkdirAll(out, 0o755)
+	_ = os.WriteFile(filepath.Join(out, "photo.png"), []byte("existing"), 0o644)
+
+	j := Job{
+		Items: []FileItem{{Path: src}}, OutputDir: out,
+		OutputMode: ModeIndividual, Overwrite: PolicyOverwrite,
+	}
+	ch := make(chan Event, 8)
+	_ = Run(context.Background(), j, ch)
+	close(ch)
+
+	b, _ := os.ReadFile(filepath.Join(out, "photo.png"))
+	if string(b) == "existing" {
+		t.Errorf("expected photo.png to be overwritten with PNG bytes")
+	}
+}
+
+func TestRun_PolicySkip_LeavesExistingAlone(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "photo.png")
+	writePNG(t, src)
+
+	out := filepath.Join(dir, "out")
+	_ = os.MkdirAll(out, 0o755)
+	_ = os.WriteFile(filepath.Join(out, "photo.png"), []byte("existing"), 0o644)
+
+	j := Job{
+		Items: []FileItem{{Path: src}}, OutputDir: out,
+		OutputMode: ModeIndividual, Overwrite: PolicySkip,
+	}
+	ch := make(chan Event, 8)
+	_ = Run(context.Background(), j, ch)
+	close(ch)
+
+	b, _ := os.ReadFile(filepath.Join(out, "photo.png"))
+	if string(b) != "existing" {
+		t.Errorf("PolicySkip should leave existing file untouched")
+	}
+}
