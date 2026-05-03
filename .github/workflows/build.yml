@@ -3,32 +3,39 @@ name: Build
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
     strategy:
       fail-fast: false
       matrix:
         include:
-          - goos: darwin
-            goarch: amd64
-            artifact: img2png-darwin-amd64
-          - goos: darwin
-            goarch: arm64
-            artifact: img2png-darwin-arm64
-          - goos: windows
-            goarch: amd64
-            artifact: img2png-windows-amd64.exe
-          - goos: linux
-            goarch: amd64
-            artifact: img2png-linux-amd64
+          - runner: macos-14
+            goos: darwin
+            artifact_dir: img2png.app
+            artifact_zip: img2png-darwin-arm64.zip
+          - runner: macos-13
+            goos: darwin
+            artifact_dir: img2png.app
+            artifact_zip: img2png-darwin-amd64.zip
+          - runner: windows-latest
+            goos: windows
+            artifact_exe: img2png.exe
+            artifact_zip: img2png-windows-amd64.zip
+          - runner: ubuntu-latest
+            goos: linux
+            artifact_tar: img2png.tar.xz
+            artifact_zip: img2png-linux-amd64.tar.xz
+
+    runs-on: ${{ matrix.runner }}
+
+    permissions:
+      contents: write
+
+    env:
+      CGO_ENABLED: "1"
 
     steps:
       - uses: actions/checkout@v5
@@ -38,19 +45,36 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install Linux GUI deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev
+
       - name: Test
         run: go test -race ./...
 
-      - name: Build
-        env:
-          CGO_ENABLED: '0'
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: go build -ldflags="-s -w" -o "${{ matrix.artifact }}" .
+      - name: Install fyne CLI
+        run: go install fyne.io/fyne/v2/cmd/fyne@latest
+
+      - name: Package
+        run: fyne package -os ${{ matrix.goos }} -name img2png -icon assets/icon.png
+
+      - name: Zip artifact (macOS)
+        if: matrix.goos == 'darwin'
+        run: zip -r ${{ matrix.artifact_zip }} ${{ matrix.artifact_dir }}
+
+      - name: Zip artifact (Windows)
+        if: matrix.goos == 'windows'
+        run: 7z a ${{ matrix.artifact_zip }} ${{ matrix.artifact_exe }}
+
+      - name: Rename artifact (Linux)
+        if: matrix.goos == 'linux'
+        run: mv ${{ matrix.artifact_tar }} ${{ matrix.artifact_zip }}
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.artifact }}
+          files: ${{ matrix.artifact_zip }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
